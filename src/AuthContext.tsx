@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { auth } from './components/auth/firebase'; // Ensure this import path is correct
+import { auth } from './components/auth/firebase'
 import { 
   onAuthStateChanged, 
   signOut, 
@@ -11,18 +11,24 @@ import {
 } from 'firebase/auth';
 import { useToast } from "../src/hooks/use-toast";
 
-
-const AuthContext = createContext();
-const [lastActivity, setLastActivity] = useState(Date.now());
-const { toast } = useToast();
-
-const updateActivity = () => {
-    setLastActivity(Date.now());
-  };
+// Define the context with a default value (optional)
+const AuthContext = createContext({
+  user: null,
+  loading: true,
+  login: async (email, password) => {},
+  googleSignIn: async () => {},
+  logout: async () => {},
+});
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [lastActivity, setLastActivity] = useState(Date.now());
+  const { toast } = useToast();
+
+  const updateActivity = () => {
+    setLastActivity(Date.now());
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -59,10 +65,21 @@ export function AuthProvider({ children }) {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
+      updateActivity();
       console.log("Google Sign-in successful:", result.user);
+      toast({
+        title: "Success",
+        description: "Logged in with Google",
+        variant: "default",
+      });
       return result.user;
     } catch (error) {
       console.error("Error signing in with Google:", error.message);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
       throw error;
     }
   };
@@ -71,8 +88,18 @@ export function AuthProvider({ children }) {
     try {
       await signOut(auth);
       console.log("User logged out successfully");
+      toast({
+        title: "Success",
+        description: "Logged out successfully",
+        variant: "default",
+      });
     } catch (error) {
       console.error("Error during logout:", error.message);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
       throw error;
     }
   };
@@ -82,7 +109,8 @@ export function AuthProvider({ children }) {
     loading,
     login,
     googleSignIn,
-    logout
+    logout,
+    lastActivity,
   };
 
   return (
