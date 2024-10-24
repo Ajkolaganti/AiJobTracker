@@ -1,9 +1,7 @@
 // aiservice.ts
 
 import axios from 'axios';
-import { ImapFlow } from 'imapflow';
-import { simpleParser } from 'mailparser';
-import { Job, AIGeneratedContent } from '../types';
+import { Job } from '../types';
 
 
 

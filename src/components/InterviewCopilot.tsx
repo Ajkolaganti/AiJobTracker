@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Mic, MicOff, MessageSquare, Share2 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
-import { wsService } from '@/services/websocketService';
-import { cacheService } from '@/services/cacheService';
-import { AudioRecorder } from '@/components/AudioRecorder';
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../components/ui/dialog';
+import { useToast } from '../hooks/use-toast';
+import { useAuth } from '../AuthContext';
+import { wsService } from '../services/webSocketService';
+import { cacheService } from '../services/cacheService';
+import { AudioRecorder } from '../components/audioRecorder/AudioRecorder';
 import { DeepgramService } from '../services/deepGramService';
 import { getConfig } from '../config/env.config';
 
@@ -514,7 +513,7 @@ const InterviewCopilot = () => {
       const DEEPGRAM_API_KEY = import.meta.env.VITE_DEEPGRAM_API_KEY;
 console.log('Deepgram API Key:', DEEPGRAM_API_KEY);
 const deepgramService = new DeepgramService(config.deepgram.apiKey);
-      
+
       deepgramService.connect(
         (text: string, isFinal: boolean) => {
           console.log('Transcript received:', text, 'isFinal:', isFinal);
