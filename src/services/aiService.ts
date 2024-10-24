@@ -7,7 +7,7 @@ import { Job } from '../types';
 
 export const getAuthUrl = async () => {
   try {
-    const response = await axios.get('http://54.197.40.157:3000/api/auth/google/url');
+    const response = await axios.get('https://coral-app-gorus.ondigitalocean.app/api/auth/google/url');
     return response.data.url;
   } catch (error) {
     console.error("Error fetching Google Auth URL:", error);
@@ -40,7 +40,7 @@ export const generateResumeAndCoverLetter = async (
 ) => {
   try {
     const response = await axios.post(
-      'http://54.197.40.157:3000/api/generate-resume-cover-letter',
+      'https://coral-app-gorus.ondigitalocean.app/api/generate-resume-cover-letter',
       {
         jobTitle,
         company,
@@ -61,7 +61,7 @@ export const enhanceText = async (text) => {
   try {
     console.log('Enhance Text:', text);
     const response = await axios.post(
-      'http://54.197.40.157:3000/api/enhance-text',
+      'https://coral-app-gorus.ondigitalocean.app/api/enhance-text',
       { text }
     );
 
@@ -78,7 +78,7 @@ export const enhanceText = async (text) => {
 export const getChatResponse = async (userMessage) => {
   try {
     const response = await axios.post(
-      'http://54.197.40.157:3000/api/get-chat-response',
+      'https://coral-app-gorus.ondigitalocean.app/api/get-chat-response',
       { userMessage }
     );
 
@@ -92,7 +92,7 @@ export const getChatResponse = async (userMessage) => {
 export const tailorResume = async (resumeContent, jobDescription) => {
   try {
     const response = await axios.post(
-      'http://54.197.40.157:3000/api/tailor-resume',
+      'https://coral-app-gorus.ondigitalocean.app/api/tailor-resume',
       {
         resumeContent,
         jobDescription,
@@ -185,7 +185,7 @@ export const tailorResume = async (resumeContent, jobDescription) => {
 export const fetchJobsFromEmail = async (userId: string, accessToken: string): Promise<Job[]> => {
   try {
     console.log('Fetching jobs from email inside aiService.ts line 307...',accessToken);
-    const response = await axios.post('http://54.197.40.157:3000/api/fetch-jobs-from-email', { userId, accessToken });
+    const response = await axios.post('https://coral-app-gorus.ondigitalocean.app/api/fetch-jobs-from-email', { userId, accessToken });
     return response.data.jobs;
   } catch (error) {
     console.error('Error in fetchJobsFromEmail:', error);

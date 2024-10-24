@@ -4,10 +4,21 @@ import {
   onAuthStateChanged, 
   signOut, 
   GoogleAuthProvider, 
-  signInWithPopup 
+  signInWithPopup,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile
 } from 'firebase/auth';
+import { useToast } from "../src/hooks/use-toast";
+
 
 const AuthContext = createContext();
+const [lastActivity, setLastActivity] = useState(Date.now());
+const { toast } = useToast();
+
+const updateActivity = () => {
+    setLastActivity(Date.now());
+  };
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -24,7 +35,24 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    // Implement email/password login if needed
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      updateActivity();
+      toast({
+        title: "Success",
+        description: "Logged in successfully",
+        variant: "default",
+      });
+      return userCredential.user;
+    } catch (error) {
+      console.error("Error signing in with email/password:", error.message);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
   const googleSignIn = async () => {
