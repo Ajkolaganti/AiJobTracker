@@ -7,16 +7,16 @@ import { Link } from 'react-router-dom'
 const plans = [
   {
     name: 'Free',
-    features: ['20 job applications', '0 AI-generated resumes', 'Email support'],
+    features: ['unlimited job applications', '0 AI-generated resumes', 'Email support'],
   },
   {
     name: 'Pro',
     price: '$9.99',
-    features: ['Unlimited job applications', '20 AI-generated resumes', 'Priority email support'],
+    features: ['Unlimited job applications', '30 AI-generated resumes', 'Priority email support'],
   },
   {
     name: 'Enterprise',
-    price: '$49.99',
+    price: '$29.99',
     features: ['Unlimited job applications', 'Unlimited AI-generated resumes', 'Interview preparation', '24/7 phone support', 'Custom integrations'],
   },
 ]

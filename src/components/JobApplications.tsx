@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Mail, Plus } from 'lucide-react';
 import JobList from './JobList';
 import JobForm from './JobForm';
 import { Job, UserProfile } from '../types';
@@ -9,6 +9,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { supabase } from './auth/supabaseClient';
 import { useAuth } from '../AuthContext';
 import { useToast } from "../hooks/use-toast";
+import EmailJobTracker from './EmailJobTracker';
+import { aiService } from '../services/aiService';
+
 
 const JobApplications = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -20,13 +23,27 @@ const JobApplications = () => {
   const { user } = useAuth();
   const [userProfile, setUserProfile] = useState<UserProfile>({});
   const { toast } = useToast();
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isConsentDialogOpen, setIsConsentDialogOpen] = useState(false);
+
+
 
   useEffect(() => {
     if (user) {
       fetchJobs();
       fetchUserProfile();
+
     }
   }, [user]);
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('access_token');
+    if (token) {
+      setAccessToken(token);
+      fetchJobsFromEmail(token);
+    }
+  }, []);
 
   const fetchJobs = async () => {
     if (!user) return;
@@ -46,6 +63,15 @@ const JobApplications = () => {
     } else {
       setJobs(data || []);
     }
+  };
+
+  const handleNewJobsFound = (newJobs: Job[]) => {
+    setJobs([...jobs, ...newJobs]);
+    toast({
+      title: "New jobs found",
+      description: `${newJobs.length} new job application(s) added from your email.`,
+      variant: "default",
+    });
   };
 
   const fetchUserProfile = async () => {
@@ -109,10 +135,10 @@ const handleEdit = (job: Job) => {
     const { data, error } = await supabase
       .from('jobs')
       .update({
-        company: updatedJob.company,
-        position: updatedJob.position,
-        date_applied: updatedJob.date_applied,
-        status: updatedJob.status,
+        company: updatedJob.company || null,
+        position: updatedJob.position || null,
+        date_applied: updatedJob.date_applied || null,
+        status: updatedJob.status || null,
         job_posting_url: updatedJob.jobPostingUrl || null,
         contact_person: updatedJob.contactPerson || null,
         set_reminder: updatedJob.setReminder || null
@@ -204,6 +230,70 @@ const handleEdit = (job: Job) => {
     }
   };
 
+  const handleAddJobsFromEmail = async () => {
+    if (!user) return;
+
+    if (!accessToken) {
+      setIsConsentDialogOpen(true);
+      return;
+    }
+
+    await fetchJobsFromEmail(accessToken);
+  };
+
+  const handleConsentGranted = async () => {
+    setIsConsentDialogOpen(false);
+    try {
+      const authUrl = await aiService.getAuthUrl();
+      window.location.href = authUrl;
+    } catch (error) {
+      console.error('Error getting auth URL:', error);
+      toast({
+        title: "Authentication Error",
+        description: "Failed to start the authentication process. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchJobsFromEmail = async (token: string) => {
+    if (!user) return;
+
+    toast({
+      title: "Checking email for jobs",
+      description: "Please wait while we fetch job applications from your email.",
+      variant: "default",
+    });
+
+    try {
+        console.log('Fetching jobs from email going to aiService.ts..',user.uid);
+      const newJobs = await aiService.fetchJobsFromEmail(user.uid, token);
+
+      // Merge new jobs with existing jobs, avoiding duplicates
+      setJobs(prevJobs => {
+        const existingIds = new Set(prevJobs.map(job => job.id));
+        const uniqueNewJobs = newJobs.filter(job => !existingIds.has(job.id));
+        return [...prevJobs, ...uniqueNewJobs];
+      });
+      console.log('Jobs fetched from email:', newJobs);
+      console.log('Updated jobs:', jobs)
+
+      toast({
+        title: "Jobs imported successfully",
+        description: `${newJobs.length} new job application(s) added from your email.`,
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('Error fetching jobs from email:', error);
+      toast({
+        title: "Error importing jobs",
+        description: "Failed to import jobs from your email. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
@@ -221,6 +311,31 @@ const handleEdit = (job: Job) => {
             <JobForm onAddJob={addJob} userProfile={userProfile} />
           </DialogContent>
         </Dialog>
+        {/* Add EmailJobTracker component */}
+        <Button 
+        onClick={handleAddJobsFromEmail} 
+        className="bg-gradient-to-r from-gray-800 to-green-800 rounded-xl hover:bg-green-600 text-white"
+      >
+        <Mail className="mr-2 h-4 w-4" /> Add Jobs from Email
+      </Button>
+
+       {/* Consent Dialog */}
+       <AlertDialog open={isConsentDialogOpen} onOpenChange={setIsConsentDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Grant Email Access</AlertDialogTitle>
+            <AlertDialogDescription>
+              To fetch job applications from your email, we need your permission to access your Gmail account. 
+              We will only read emails related to job applications. You can revoke this permission at any time.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConsentGranted}>Grant Access</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       </div>
       <JobList jobs={jobs} onEdit={handleEdit} onDelete={handleDelete} />
 

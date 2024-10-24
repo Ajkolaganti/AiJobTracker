@@ -35,8 +35,11 @@ export default function SigninPage() {
 
   const handleGoogleSignIn = async () => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
+        console.log("Signing in with Google...");
+      const result = await signInWithPopup(auth, googleProvider)
       const user = result.user;
+
+      
 
       // Save user info to localStorage or context for later use
       localStorage.setItem('userToken', user.accessToken);

@@ -13,14 +13,14 @@ interface JobListProps {
 
 export default function JobList({ jobs, onEdit, onDelete }: JobListProps) {
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Applied':
+    switch (status.toLowerCase()) {
+      case 'applied':
         return 'bg-blue-500 text-white';
-      case 'Interview Scheduled':
+      case 'interview scheduled':
         return 'bg-yellow-500 text-white';
-      case 'Offer Received':
+      case 'offer received':
         return 'bg-green-500 text-white';
-      case 'Rejected':
+      case 'rejected':
         return 'bg-red-500 text-white';
       default:
         return 'bg-gray-500 text-white';
@@ -47,7 +47,7 @@ export default function JobList({ jobs, onEdit, onDelete }: JobListProps) {
             <TableRow key={job.id} className="hover:bg-blue-700-500 transition-colors duration-200">
               <TableCell className="border bg-black text-white px-4 py-2 font-medium">{job.company}</TableCell>
               <TableCell className="border bg-black text-white px-4 py-2">{job.position}</TableCell>
-              <TableCell className="border bg-black text-white px-4 py-2">{job.date_applied}</TableCell>
+              <TableCell className="border bg-black text-white px-4 py-2">{new Date(job.date_applied).toLocaleDateString()}</TableCell>
               <TableCell className="border bg-black text-white px-4 py-2">
                 <Badge className={`px-2 py-1 rounded-full ${getStatusColor(job.status)}`}>{job.status}</Badge>
               </TableCell>

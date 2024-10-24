@@ -1,0 +1,423 @@
+(self.webpackChunk_N_E = self.webpackChunk_N_E || []).push([[5994], {
+    79278: function(e, r, t) {
+        Promise.resolve().then(t.bind(t, 75950))
+    },
+    75950: function(e, r, t) {
+        "use strict";
+        t.r(r),
+        t.d(r, {
+            default: function() {
+                return b
+            }
+        });
+        var n = t(57437)
+          , s = t(50308)
+          , a = t(72049)
+          , c = t(77112)
+          , i = t(25137)
+          , o = t(25547)
+          , l = t(2265)
+          , u = t(12832)
+          , d = t(33419)
+          , h = t(24033)
+          , f = t(19185)
+          , v = t(94884)
+          , p = t(67121)
+          , m = t(29334)
+          , g = t(65732)
+          , x = t(11835)
+          , w = t(68447)
+          , k = t(20828);
+        let j = e => {
+            let {} = e
+              , {user: r} = (0,
+            f.aF)()
+              , t = (0,
+            h.useSearchParams)()
+              , {dictionary: s, lang: a, creditsLeft: i, isActiveSubscription: o, timedCopilot: j, increaseUsedCredits: S} = (0,
+            c.o)()
+              , y = (0,
+            h.useRouter)()
+              , b = (0,
+            l.useRef)()
+              , [C,E] = (0,
+            l.useState)(!1)
+              , [N,R] = (0,
+            l.useState)(!1)
+              , _ = (0,
+            l.useRef)("true" === t.get("proxy"))
+              , O = (0,
+            l.useRef)()
+              , A = (0,
+            l.useRef)()
+              , P = (0,
+            l.useRef)()
+              , [D,z] = (0,
+            l.useState)([])
+              , [F,I] = (0,
+            l.useState)(!0)
+              , [L,M] = (0,
+            l.useState)()
+              , [T,W] = (0,
+            l.useState)(0)
+              , $ = (0,
+            l.useRef)(0)
+              , [B,J] = (0,
+            l.useState)(0)
+              , [U,Z] = (0,
+            l.useState)()
+              , [q,H] = (0,
+            l.useState)(a);
+            (0,
+            l.useEffect)( () => {
+                var e;
+                null === (e = b.current) || void 0 === e || e.finish()
+            }
+            , [q]);
+            let K = (0,
+            l.useCallback)(async () => {
+                if (r)
+                    try {
+                        let e = r.emailAddresses[0].emailAddress
+                          , t = Date.now()
+                          , n = new v.Chance(e,t,"nonce").guid()
+                          , s = await fetch("/api/deepgram-key", {
+                            method: "POST",
+                            body: JSON.stringify({
+                                email: e,
+                                time: t
+                            }),
+                            headers: {
+                                "X-Nonce": n
+                            },
+                            cache: "no-store"
+                        });
+                        if (s.ok) {
+                            let {key: e} = await s.json();
+                            return e
+                        }
+                        throw "response not ok"
+                    } catch (e) {
+                        console.log("error fetching deepgram key", e)
+                    }
+            }
+            , [r]);
+            (0,
+            l.useEffect)( () => {
+                if (o && (W(0),
+                J(0)),
+                C) {
+                    let e = setInterval( () => {
+                        W(e => e + 1),
+                        J(e => e + 1)
+                    }
+                    , 1e3);
+                    return () => clearInterval(e)
+                }
+            }
+            , [o, C]);
+            let V = (0,
+            l.useCallback)( () => {
+                var e, r, t, n;
+                if (null === (e = P.current) || void 0 === e || e.stop(),
+                P.current = void 0,
+                _.current)
+                    null === (r = O.current) || void 0 === r || r.disconnect(),
+                    O.current = void 0;
+                else {
+                    let e = null === (t = b.current) || void 0 === t ? void 0 : t.getReadyState();
+                    e && e <= 1 && (null === (n = b.current) || void 0 === n || n.finish()),
+                    b.current = void 0
+                }
+            }
+            , [])
+              , X = (0,
+            l.useCallback)( () => {
+                var e;
+                null === (e = A.current) || void 0 === e || e.getTracks().forEach(e => e.stop()),
+                A.current = void 0,
+                V(),
+                E(!1)
+            }
+            , [V])
+              , G = (0,
+            l.useCallback)(async () => {
+                if (A.current || X(),
+                P.current = new MediaRecorder(A.current),
+                P.current.addEventListener("dataavailable", e => {
+                    var r, t;
+                    if (_.current) {
+                        if (null === (r = O.current) || void 0 === r ? void 0 : r.connected)
+                            try {
+                                O.current.emit("audio", e.data)
+                            } catch (e) {
+                                console.error("error sending to Socket.IO", e)
+                            }
+                    } else if ((null === (t = b.current) || void 0 === t ? void 0 : t.getReadyState()) === 1)
+                        try {
+                            b.current.send(e.data)
+                        } catch (e) {
+                            console.error("error sending to deepgram", e)
+                        }
+                }
+                ),
+                R(!0),
+                _.current) {
+                    let e = (null == r ? void 0 : r.emailAddresses[0].emailAddress) || ""
+                      , t = Date.now()
+                      , n = new v.Chance(e,t,"nonce").guid();
+                    O.current = (0,
+                    g.io)("wss://transcribe-alt.interviews.chat", {
+                        reconnection: !1,
+                        query: {
+                            lang: q,
+                            nonce: n,
+                            time: t.toString(),
+                            email: e,
+                            interim_results: !0,
+                            diarize: !0
+                        },
+                        transports: ["websocket"]
+                    }),
+                    O.current.on("connect", () => {
+                        try {
+                            var e;
+                            null === (e = P.current) || void 0 === e || e.start(1e3)
+                        } catch (e) {
+                            console.log("error starting recorder", e)
+                        }
+                        R(!1),
+                        console.log("sessionSecondsWhileDisconnected.current", $.current)
+                    }
+                    ),
+                    O.current.on("disconnect", e => {
+                        V()
+                    }
+                    ),
+                    O.current.on("transcript", e => {
+                        if (e.channel.alternatives[0].transcript) {
+                            let r = {
+                                text: e.channel.alternatives[0].transcript,
+                                speaker: (0,
+                                x.P4)(e.channel.alternatives[0].words)
+                            };
+                            e.is_final ? (z(e => [...e, r]),
+                            Z(void 0)) : Z(r),
+                            J(0)
+                        }
+                    }
+                    )
+                } else {
+                    let e = await K();
+                    if (!e)
+                        return;
+                    let r = await (0,
+                    p.eI)(e);
+                    b.current = r.listen.live({
+                        model: "nova-2",
+                        interim_results: !0,
+                        smart_format: !0,
+                        language: q,
+                        diarize: !0
+                    }),
+                    b.current.on(m.l.Open, () => {
+                        try {
+                            var e;
+                            null === (e = P.current) || void 0 === e || e.start(1e3)
+                        } catch (e) {
+                            console.log("error starting recorder", e)
+                        }
+                        R(!1),
+                        console.log("sessionSecondsWhileDisconnected.current", $.current)
+                    }
+                    ),
+                    b.current.on(m.l.Close, () => {
+                        V()
+                    }
+                    ),
+                    b.current.on(m.l.Transcript, e => {
+                        if (e.channel.alternatives[0].transcript) {
+                            let r = {
+                                text: e.channel.alternatives[0].transcript,
+                                speaker: (0,
+                                x.P4)(e.channel.alternatives[0].words)
+                            };
+                            e.is_final ? (z(e => [...e, r]),
+                            Z(void 0)) : Z(r),
+                            J(0)
+                        }
+                    }
+                    )
+                }
+            }
+            , [q, K, X, V, null == r ? void 0 : r.emailAddresses]);
+            (0,
+            l.useEffect)( () => {
+                if (C) {
+                    if (!o && T > d.pm && y.push(`/${q}/account`),
+                    T > d.KE || B > d.A) {
+                        X();
+                        return
+                    }
+                    P.current || N || G(),
+                    j && T && T % d.oc == 0 && (S(1),
+                    fetch("/api/update-customer", {
+                        method: "POST",
+                        body: JSON.stringify({
+                            increaseUsedCredits: 1
+                        })
+                    }))
+                }
+            }
+            , [N, G, o, T, B, q, C, y, X, S, j]),
+            (0,
+            l.useEffect)( () => {
+                N ? $.current > d.us ? (V(),
+                R(!1),
+                _.current = !_.current,
+                $.current = 0) : $.current = $.current + 1 : $.current = 0
+            }
+            , [N, T, $, V]),
+            (0,
+            l.useEffect)( () => () => {
+                X()
+            }
+            , [X]);
+            let Q = (0,
+            l.useCallback)(async () => {
+                try {
+                    new CaptureController().setFocusBehavior("no-focus-change")
+                } catch (e) {}
+                try {
+                    A.current = await navigator.mediaDevices.getUserMedia({
+                        audio: !0
+                    }),
+                    I(!0)
+                } catch (e) {
+                    I(!1);
+                    return
+                }
+                try {
+                    G(),
+                    M(void 0),
+                    E(!0)
+                } catch (e) {
+                    M(String(e))
+                }
+            }
+            , [G]);
+            return (0,
+            n.jsxs)(n.Fragment, {
+                children: [i > 0 ? (0,
+                n.jsx)(w.z, {
+                    onClick: Q,
+                    variant: "filled",
+                    className: "mt-2",
+                    children: s.copilot.start
+                }) : (0,
+                n.jsx)(u.b, {
+                    href: `/${q}/account`,
+                    message: s.alert.messageCopilot,
+                    cta: s.alert.cta
+                }), L && (0,
+                n.jsx)(u.b, {
+                    className: "mt-4",
+                    message: s.alert.connectionError.replace("{error}", L)
+                }), !F && (0,
+                n.jsx)(u.b, {
+                    message: s.alert.noMicrophone
+                }), (0,
+                n.jsx)(k.o, {
+                    meetingConnected: C,
+                    transcripts: D,
+                    connectingDeepgram: N,
+                    disconnect: X,
+                    sessionSeconds: T,
+                    setIdleSessionSeconds: J,
+                    interimTranscript: U,
+                    lang: q,
+                    setLang: H,
+                    useDeepgramProxy: _
+                })]
+            })
+        }
+        ;
+        var S = t(25587)
+          , y = t(56410)
+          , b = () => {
+            let {dictionary: e, customer: r} = (0,
+            c.o)();
+            return (0,
+            n.jsxs)(n.Fragment, {
+                children: [(0,
+                n.jsx)(s.f, {}), r && (0,
+                n.jsxs)(o.m, {
+                    children: [(0,
+                    n.jsxs)("div", {
+                        className: "flex items-center",
+                        children: [(0,
+                        n.jsx)(S.Z, {
+                            className: "mr-3 w-8 shrink-0 text-blue-600"
+                        }), (0,
+                        n.jsx)(a.V, {
+                            children: e.copilot.copilotForPhoneCalls
+                        })]
+                    }), (0,
+                    n.jsxs)("article", {
+                        className: "prose mt-4 dark:prose-invert",
+                        children: [(0,
+                        n.jsx)("p", {
+                            children: e.copilot.info.phoneCallScenario1
+                        }), (0,
+                        n.jsx)(j, {}), (0,
+                        n.jsx)(y.R, {}), (0,
+                        n.jsx)("h3", {
+                            children: e.copilot.tips.title
+                        }), (0,
+                        n.jsxs)("ul", {
+                            children: [(0,
+                            n.jsx)("li", {
+                                children: e.copilot.info.phoneCallScenario2
+                            }), (0,
+                            n.jsx)("li", {
+                                children: e.copilot.info.phoneCallDiarization
+                            })]
+                        })]
+                    })]
+                }), !r && (0,
+                n.jsx)(i.$, {
+                    className: "h-12 w-12"
+                })]
+            })
+        }
+    },
+    25587: function(e, r, t) {
+        "use strict";
+        var n = t(2265);
+        let s = n.forwardRef(function({title: e, titleId: r, ...t}, s) {
+            return n.createElement("svg", Object.assign({
+                xmlns: "http://www.w3.org/2000/svg",
+                fill: "none",
+                viewBox: "0 0 24 24",
+                strokeWidth: 1.5,
+                stroke: "currentColor",
+                "aria-hidden": "true",
+                ref: s,
+                "aria-labelledby": r
+            }, t), e ? n.createElement("title", {
+                id: r
+            }, e) : null, n.createElement("path", {
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                d: "M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"
+            }))
+        });
+        r.Z = s
+    }
+}, function(e) {
+    e.O(0, [5229, 5250, 4090, 2034, 9014, 3849, 554, 6105, 2071, 5338, 8148, 4284, 2971, 4938, 1744], function() {
+        return e(e.s = 79278)
+    }),
+    _N_E = e.O()
+}
+]);

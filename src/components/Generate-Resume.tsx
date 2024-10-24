@@ -7,14 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../components/ui/accordion";
 import { PlusCircle, Trash2, Upload, User, Briefcase, GraduationCap, Award, Globe, BookOpen, Megaphone, Download, FileText, Loader2 } from 'lucide-react';
-import {
-  Document,
-  Packer,
-  Paragraph,
-  TextRun,
-  HeadingLevel,
-  AlignmentType,
-} from 'docx';
+
 import { saveAs } from 'file-saver';
 import mammoth from 'mammoth';
 import axios from 'axios';
@@ -25,6 +18,8 @@ import { supabase } from './auth/supabaseClient';
 import { useAuth } from '../AuthContext';
 import { useToast } from "../hooks/use-toast";
 import EmploymentDetails from './EmploymentDetailsProps';  // Import the new component
+import { Document, Paragraph, Packer, TextRun, HeadingLevel, AlignmentType, UnderlineType, convertInchesToTwip } from 'docx';
+
 
 
 
@@ -356,9 +351,10 @@ const handleTailorResume = async () => {
 
   const generateDocx = () => {
     const cleanedResume = tailoredResume.replace(/\*/g, '').trim();
-
-    const sections = cleanedResume.split('\n---\n').map((section) => section.trim());
-
+  
+    // Split the resume into sections based on headers
+    const sections = cleanedResume.split(/(?=##\s)/g).map((section) => section.trim());
+  
     const doc = new Document({
       styles: {
         paragraphStyles: [
@@ -367,7 +363,7 @@ const handleTailorResume = async () => {
             name: 'Normal',
             run: {
               font: 'Calibri',
-              size: 22,
+              size: 22, // 11pt font size
               color: '000000',
             },
             paragraph: {
@@ -381,7 +377,7 @@ const handleTailorResume = async () => {
             next: 'Normal',
             quickFormat: true,
             run: {
-              size: 28,
+              size: 32, // 16pt font size
               bold: true,
               color: '2E74B5',
             },
@@ -396,7 +392,7 @@ const handleTailorResume = async () => {
             next: 'Normal',
             quickFormat: true,
             run: {
-              size: 26,
+              size: 26, // 13pt font size
               bold: true,
               color: '2E74B5',
             },
@@ -411,98 +407,119 @@ const handleTailorResume = async () => {
           properties: {},
           children: sections.flatMap((section, index) => {
             const lines = section.split('\n').filter((line) => line.trim() !== '');
-
-            if (index === 0) {
-              const name = lines[0];
-              const contactInfo = lines.slice(1);
-
-              return [
-                new Paragraph({
+  
+            // Header parsing
+            const headerMatch = lines[0].match(/^##\s*(.*)/);
+            const headerText = headerMatch ? headerMatch[1].trim() : '';
+            const contentLines = headerMatch ? lines.slice(1) : lines;
+  
+            // Special handling for the contact info section
+            if (index === 0 && headerText.toLowerCase().includes('contact')) {
+              const nameLine = contentLines.shift();
+              const nameParagraph = new Paragraph({
+                children: [
+                  new TextRun({
+                    text: nameLine,
+                    bold: true,
+                    size: 48, // 24pt font size
+                    font: 'Calibri',
+                  }),
+                ],
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 120 },
+              });
+  
+              const contactInfoParagraph = new Paragraph({
+                text: contentLines.join(' | '),
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 200 },
+              });
+  
+              return [nameParagraph, contactInfoParagraph];
+            }
+  
+            // Section headers
+            const sectionHeader = new Paragraph({
+              text: headerText.toUpperCase(),
+              heading: HeadingLevel.HEADING_1,
+              thematicBreak: true,
+              spacing: { before: 240, after: 120 },
+            });
+  
+            // Content parsing
+            const contentParagraphs = [];
+  
+            for (let i = 0; i < contentLines.length; i++) {
+              let line = contentLines[i];
+  
+              // Experience Section Formatting
+              if (headerText.toLowerCase() === 'experience' && line.includes(' at ')) {
+                // Parse job title and company
+                const [position, companyPart] = line.split(' at ');
+                let [company, dates] = companyPart.split(', ');
+                dates = dates || '';
+  
+                const positionParagraph = new Paragraph({
                   children: [
                     new TextRun({
-                      text: name,
+                      text: position.trim(),
                       bold: true,
-                      size: 36,
-                      font: 'Calibri',
+                      size: 24, // 12pt font size
+                    }),
+                    new TextRun({
+                      text: ` at ${company.trim()}`,
+                      italics: true,
+                      size: 22, // 11pt font size
+                    }),
+                    new TextRun({
+                      text: dates ? `, ${dates.trim()}` : '',
+                      size: 22, // 11pt font size
                     }),
                   ],
-                  alignment: AlignmentType.CENTER,
-                  spacing: { after: 120 },
-                }),
-                new Paragraph({
-                  text: contactInfo.join(' | '),
-                  alignment: AlignmentType.CENTER,
-                  spacing: { after: 200 },
-                }),
-                new Paragraph({
-                  children: [],
-                }),
-              ];
-            }
-
-            const titleLineIndex = lines.findIndex((line) => /^[A-Z\s]+:$/.test(line.trim()));
-            let title = '';
-            let contentLines = [];
-
-            if (titleLineIndex !== -1) {
-              title = lines[titleLineIndex];
-              contentLines = lines.slice(titleLineIndex + 1);
-            } else {
-              title = lines[0];
-              contentLines = lines.slice(1);
-            }
-
-            const sectionTitle = new Paragraph({
-              text: title.replace(/:$/, '').toUpperCase(),
-              style: 'Heading1',
-            });
-
-            const contentParagraphs = [];
-
-            contentLines.forEach((line) => {
-              if (/^-\s/.test(line.trim())) {
+                  spacing: { before: 200, after: 100 },
+                });
+  
+                contentParagraphs.push(positionParagraph);
+  
+                // Add bullet points for responsibilities
+                i++; // Move to the next line
+                while (i < contentLines.length && contentLines[i].startsWith('- ')) {
+                  contentParagraphs.push(
+                    new Paragraph({
+                      text: contentLines[i].replace(/^- /, '').trim(),
+                      bullet: { level: 0 },
+                      spacing: { before: 60, after: 60 },
+                    })
+                  );
+                  i++;
+                }
+                i--; // Adjust the index since the outer loop will increment it
+              } else if (line.startsWith('- ')) {
+                // Bullet points for other sections
                 contentParagraphs.push(
                   new Paragraph({
                     text: line.replace(/^- /, '').trim(),
                     bullet: { level: 0 },
-                    style: 'Normal',
                     spacing: { before: 60, after: 60 },
                   })
                 );
-              } else if (line.includes(' - ')) {
-                const [position, dates] = line.split(' - ');
-                contentParagraphs.push(
-                  new Paragraph({
-                    children: [
-                      new TextRun({
-                        text: position.trim(),
-                        bold: true,
-                      }),
-                      new TextRun({
-                        text: ' - ' + dates.trim(),
-                        italics: true,
-                        size: 20,
-                      }),
-                    ],
-                    spacing: { before: 120, after: 60 },
-                  })
-                );
               } else {
+                // Regular paragraph
                 contentParagraphs.push(
                   new Paragraph({
                     text: line.trim(),
-                    style: 'Normal',
+                    spacing: { before: 100, after: 100 },
                   })
                 );
               }
-            });
-
-            return [sectionTitle, ...contentParagraphs];
+            }
+  
+            return [sectionHeader, ...contentParagraphs];
           }),
         },
       ],
     });
-
+  
     Packer.toBlob(doc).then((blob) => {
       saveAs(blob, 'tailored_resume.docx');
     });

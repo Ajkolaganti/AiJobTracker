@@ -6,7 +6,7 @@ export interface Job {
   status: 'Applied' | 'Interview Scheduled' | 'Offer Received' | 'Rejected';
   jobPostingUrl: string;
   contactPerson: string;
-  reminder?: Date;
+  setReminder?: Date;
 }
 
 export interface AIGeneratedContent {
@@ -21,3 +21,24 @@ export interface UserProfile {
   phone?:string;
 
 }
+
+interface AudioWorkletProcessor {
+  readonly port: MessagePort;
+  process(
+    inputs: Float32Array[][],
+    outputs: Float32Array[][],
+    parameters: Record<string, Float32Array>
+  ): boolean;
+}
+
+declare var AudioWorkletProcessor: {
+  prototype: AudioWorkletProcessor;
+  new(): AudioWorkletProcessor;
+};
+
+declare function registerProcessor(
+  name: string,
+  processorCtor: new () => AudioWorkletProcessor
+): void;
+
+registerProcessor('audio-processor', AudioWorkletProcessor);

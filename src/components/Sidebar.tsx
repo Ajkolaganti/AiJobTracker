@@ -1,7 +1,13 @@
-import React from 'react';
-import { Briefcase, User, Settings, BarChart, FileText, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
+import { Briefcase, User, Settings, BarChart, FileText, LogOut, Mic, ChevronDown, Phone, Video } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from "../components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu"
 
 interface SidebarProps {
   isOpen: boolean;
@@ -11,8 +17,9 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const menuItems = [
+  const mainMenuItems = [
     { name: 'Dashboard', icon: BarChart, path: '/dashboard' },
     { name: 'Job Applications', icon: Briefcase, path: '/applications' },
     { name: 'Generate Resume', icon: FileText, path: '/generate-resume' },
@@ -21,10 +28,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   ];
 
   const handleLogout = async () => {
-    // Simulate logout function (you should implement your actual logout logic)
     await logout();
     navigate('/signin');
   };
+
+  const isActivePath = (path: string) => location.pathname.startsWith(path);
 
   return (
     <div
@@ -37,7 +45,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <Briefcase className="text-blue-400" size={32} />
           <span className="ml-2 text-xl font-bold">AI Job Tracker</span>
         </div>
-        {/* Close button only visible on smaller screens */}
         <Button variant="ghost" size="icon" onClick={onClose} className="md:hidden">
           <svg
             className="w-6 h-6"
@@ -51,7 +58,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       </div>
 
       <nav className="mt-4 flex-grow">
-        {menuItems.map((item) => {
+        {mainMenuItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
           return (
@@ -66,6 +73,34 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             </Link>
           );
         })}
+
+        {/* Meeting Copilot Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className={`flex items-center px-4 py-2 cursor-pointer hover:bg-gray-700 
+              ${isActivePath('/copilot') ? 'bg-gray-700' : ''}`}>
+              <Mic className="h-5 w-5" />
+              <span className="ml-2">Interview Copilot</span>
+              <ChevronDown className="ml-auto h-4 w-4" />
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-48 bg-gray-800 text-white border-gray-700">
+            <DropdownMenuItem 
+              className="hover:bg-gray-700 focus:bg-gray-700"
+              onClick={() => navigate('/copilot/phone')}
+            >
+              <Phone className="mr-2 h-4 w-4" />
+              Phone Call
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="hover:bg-gray-700 focus:bg-gray-700"
+              onClick={() => navigate('/copilot/video')}
+            >
+              <Video className="mr-2 h-4 w-4" />
+              Video Call
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </nav>
 
       <div className="p-8 bg-gray-800-to-gray-900 text-white">
@@ -82,7 +117,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   );
 }
 
-// Logout function - Simulate user logout (customize based on your auth logic)
 const logout = async () => {
   localStorage.removeItem('userToken');
 };

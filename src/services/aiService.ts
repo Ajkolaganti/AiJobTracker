@@ -1,10 +1,20 @@
 // aiservice.ts
 
 import axios from 'axios';
-import { AIGeneratedContent } from '../types';
+import { ImapFlow } from 'imapflow';
+import { simpleParser } from 'mailparser';
+import { Job, AIGeneratedContent } from '../types';
 
-const API_KEY = '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';
-const API_URL = 'https://api.openai.com/v1/chat/completions';
+
+
+export const getAuthUrl = async () => {
+  try {
+    const response = await axios.get('http://localhost:3000/api/auth/google/url');
+    return response.data.url;
+  } catch (error) {
+    console.error("Error fetching Google Auth URL:", error);
+  }
+};
 
 // Fetch Job Description from URL
 async function fetchJobDescription(jobPostingUrl: string): Promise<string> {
@@ -25,56 +35,23 @@ async function fetchJobDescription(jobPostingUrl: string): Promise<string> {
 
 // Generate Resume and Cover Letter
 export const generateResumeAndCoverLetter = async (
-  jobTitle: string,
-  company: string,
-  jobPostingUrl: string,
-  existingResume?: string
-): Promise<AIGeneratedContent> => {
+  jobTitle,
+  company,
+  jobPostingUrl,
+  existingResume
+) => {
   try {
-    const jobDescription = await fetchJobDescription(jobPostingUrl);
-
-    const messages = [
-      { role: 'system', content: 'You are an expert resume writer and career coach.' },
-      {
-        role: 'user',
-        content: `Create a tailored resume for a ${jobTitle} position at ${company}.
-        Job Description: ${jobDescription}
-        ${existingResume ? `Existing Resume: ${existingResume}` : 'Please create a new resume from scratch.'}
-
-        Please format the resume in Markdown.`,
-      },
-      {
-        role: 'user',
-        content: `Now, create a cover letter for the same position.
-        Address it to the hiring manager at ${company}.
-
-        Please format the cover letter in Markdown.`,
-      },
-    ];
-
     const response = await axios.post(
-      API_URL,
+      'http://localhost:3000/api/generate-resume-cover-letter',
       {
-        model: 'gpt-4o',
-        messages: messages,
-        max_tokens: 2000,
-        temperature: 0.7,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${API_KEY}`,
-        },
+        jobTitle,
+        company,
+        jobPostingUrl,
+        existingResume,
       }
     );
 
-    const generatedContent = response.data.choices[0].message.content;
-    const [resume, coverLetter] = generatedContent.split('Now, create a cover letter for the same position.');
-
-    return {
-      resume: resume.trim(),
-      coverLetter: coverLetter.trim(),
-    };
+    return response.data;
   } catch (error) {
     console.error('Error generating content:', error);
     throw error;
@@ -82,134 +59,188 @@ export const generateResumeAndCoverLetter = async (
 };
 
 // Enhance Text using AI (for Professional Summary and Experience Descriptions)
-export const enhanceText = async (text: string): Promise<string> => {
+export const enhanceText = async (text) => {
   try {
-    const messages = [
-      {
-        role: 'system',
-        content:
-          'You are a professional resume writer specializing in enhancing resumes. Provide only the enhanced text without any introductory or concluding remarks, instructions, or formatting. Do not include any markdown or additional comments.',
-      },
-      {
-        role: 'user',
-        content: `Please enhance the following text to make it more impactful and professional, ensuring it appears to be written by a human:
-
-"${text}"`,
-      },
-    ];
-
     const response = await axios.post(
-      API_URL,
-      {
-        model: 'gpt-4o', // Corrected model name
-        messages: messages,
-        max_tokens: 500,
-        temperature: 0.7,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${API_KEY}`,
-        },
-      }
+      'http://localhost:3000/api/enhance-text',
+      { text }
     );
 
-    const rawContent = response.data.choices[0].message.content.trim();
-
-    // Option 1: If the response is clean and contains only the enhanced text
-    // return rawContent;
-
-    // Option 2: If the response might contain delimiters or additional text,
-    // extract the content between '---' or other markers.
-
-    // Example extraction between '---'
-    const delimiter = '---';
-    const parts = rawContent.split(delimiter);
-
-    if (parts.length >= 3) {
-      // Enhanced text is between the first and second '---'
-      const enhancedText = parts[1].trim();
-      return enhancedText;
-    }
-
-    // If no delimiters are found, return the raw content
-    return rawContent;
+    return response.data.enhancedText;
   } catch (error) {
     console.error('Error enhancing text:', error);
     throw error;
   }
 };
 
-export const getChatResponse = async (userMessage: string): Promise<string> => {
-  try {
-    const messages = [
-      { role: 'system', content: 'You are an AI assistant specialized in job search and interview preparation. Provide helpful, concise advice to users.' },
-      { role: 'user', content: userMessage },
-    ];
+// Enhance Text using AI (for Professional Summary and Experience Descriptions)
 
+
+export const getChatResponse = async (userMessage) => {
+  try {
     const response = await axios.post(
-      API_URL,
-      {
-        model: 'gpt-4o',
-        messages: messages,
-        max_tokens: 150,
-        temperature: 0.7,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${API_KEY}`,
-        },
-      }
+      'http://localhost:3000/api/get-chat-response',
+      { userMessage }
     );
 
-    const aiResponse = response.data.choices[0].message.content.trim();
-    return aiResponse;
+    return response.data.aiResponse;
   } catch (error) {
     console.error('Error getting chat response:', error);
     throw error;
   }
 };
 
-export const tailorResume = async (resumeContent: string, jobDescription: string): Promise<string> => {
+export const tailorResume = async (resumeContent, jobDescription) => {
   try {
-    const messages = [
-      {
-        role: 'system',
-        content: 'You are an AI assistant specializing in tailoring resumes to specific job descriptions. Your task is to analyze the given resume and job description, then provide an updated version of the resume that better matches the job requirements. Focus on enhancing the responsibilities and experiences to align with the job description. Maintain the original structure and formatting of the resume.',
-      },
-      {
-        role: 'user',
-        content: `Please tailor the following resume to better match the provided job description. Focus on updating the responsibilities and experiences, ensuring it appears to be written by a human:
-
-Resume:
-${resumeContent}
-
-Job Description:
-${jobDescription}`,
-      },
-    ];
-
     const response = await axios.post(
-      API_URL,
+      'http://localhost:3000/api/tailor-resume',
       {
-        model: 'gpt-4o', // Make sure to use the correct model name
-        messages: messages,
-        max_tokens: 2000, // Adjust as needed
-        temperature: 0.7,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${API_KEY}`,
-        },
+        resumeContent,
+        jobDescription,
       }
     );
 
-    const tailoredResume = response.data.choices[0].message.content.trim();
-    return tailoredResume;
+    return response.data.tailoredResume;
   } catch (error) {
     console.error('Error tailoring resume:', error);
     throw error;
   }
+};
+
+
+// // Function to enhance jobs with AI insights
+// async function enhanceJobsWithAI(jobs: Job[]): Promise<Job[]> {
+//   const messages = [
+//     { role: 'system', content: 'You are an AI assistant specialized in job search and career advice.' },
+//     { 
+//       role: 'user', 
+//       content: `Analyze the following job applications and provide insights:
+//       1. Categorize the status of each job into standard stages (Applied, Interview Scheduled, Offer Received, Rejected).
+//       2. Provide 3 general insights or recommendations based on the overall job search progress.
+      
+//       Job Applications:
+//       ${JSON.stringify(jobs)}
+      
+//       Provide the output in the following JSON format:
+//       {
+//         "categorizedJobs": [
+//           {
+//             "id": string,
+//             "status": string
+//           }
+//         ],
+//         "insights": [string, string, string]
+//       }`
+//     }
+//   ];
+
+//   const response = await axios.post(
+//     API_URL,
+//     {
+//       model: 'gpt-4o',
+//       messages: messages,
+//       max_tokens: 500,
+//       temperature: 0.5,
+//     },
+//     {
+//       headers: {
+//         'Content-Type': 'application/json',
+//         Authorization: `Bearer ${API_KEY}`,
+//       },
+//     }
+//   );
+
+//   const aiOutput = JSON.parse(response.data.choices[0].message.content);
+
+//   // Update job statuses
+//   const enhancedJobs = jobs.map(job => {
+//     const categorizedJob = aiOutput.categorizedJobs.find(cj => cj.id === job.id);
+//     return categorizedJob ? { ...job, status: categorizedJob.status } : job;
+//   });
+
+//   // You can store or return insights separately if needed
+//   const insights = aiOutput.insights;
+
+//   return enhancedJobs;
+// }
+
+// const oauth2Client = new google.auth.OAuth2(
+//   process.env.GOOGLE_CLIENT_ID,
+//   process.env.GOOGLE_CLIENT_SECRET,
+//   process.env.GOOGLE_REDIRECT_URI
+// );
+
+// export const getAuthUrl = (): string => {
+//   return oauth2Client.generateAuthUrl({
+//     access_type: 'offline',
+//     scope: ['https://www.googleapis.com/auth/gmail.readonly']
+//   });
+// };
+
+// export const getAccessToken = async (code: string): Promise<string> => {
+//   const { tokens } = await oauth2Client.getToken(code);
+//   oauth2Client.setCredentials(tokens);
+//   return tokens.access_token as string;
+// };
+
+export const fetchJobsFromEmail = async (userId: string, accessToken: string): Promise<Job[]> => {
+  try {
+    console.log('Fetching jobs from email inside aiService.ts line 307...',accessToken);
+    const response = await axios.post('http://localhost:3000/api/fetch-jobs-from-email', { userId, accessToken });
+    return response.data.jobs;
+  } catch (error) {
+    console.error('Error in fetchJobsFromEmail:', error);
+    throw error;
+  }
+};
+
+// Helper function to extract job info using AI
+async function extractJobInfo(emailContent: string) {
+  const messages = [
+    { role: 'system', content: 'You are an AI assistant specialized in analyzing job application emails.' },
+    { 
+      role: 'user', 
+      content: `Analyze the following email content and extract job application information if present. 
+      If it's not a job application email, indicate that it's not.
+      
+      Email content:
+      ${emailContent}
+      
+      Provide the output in the following JSON format:
+      {
+        "isJobApplication": boolean,
+        "company": string,
+        "position": string,
+        "date": string,
+        "status": string
+      }`
+    }
+  ];
+
+  const response = await axios.post(
+    API_URL,
+    {
+      model: 'gpt-4o',
+      messages: messages,
+      max_tokens: 200,
+      temperature: 0.3,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${API_KEY}`,
+      },
+    }
+  );
+
+  return JSON.parse(response.data.choices[0].message.content);
+}
+
+export const aiService = {
+  getAuthUrl,
+  fetchJobsFromEmail,
+  generateResumeAndCoverLetter,
+  enhanceText,
+  getChatResponse,
+  tailorResume
 };

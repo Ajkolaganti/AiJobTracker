@@ -13,8 +13,11 @@ import Payment from './components/Payment';
 import GenerateResumePage from './components/Generate-Resume';
 import JobApplications from './components/JobApplications';
 import ChatBot from './components/ChatBot';
+import InterviewCopilot from './components/InterviewCopilot';
 import { Button } from './components/ui/button';
 import { Menu } from 'lucide-react';
+import { createBrowserRouter } from 'react-router-dom';
+
 
 const AppContent = () => {
   const { user, loading } = useAuth();
@@ -85,6 +88,10 @@ const AppContent = () => {
             <Route
               path="/applications"
               element={user ? <JobApplications /> : <Navigate to="/signin" replace />}
+            />
+            <Route
+              path="/copilot/:callType"
+              element={user ? <InterviewCopilot /> : <Navigate to="/signin" replace />}
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
