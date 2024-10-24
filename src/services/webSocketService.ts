@@ -11,7 +11,7 @@ class WebSocketService {
     }
   
     private setupWebSocket() {
-      this.ws = new WebSocket('ws://localhost:3000/ws');
+      this.ws = new WebSocket('ws://coral-app-gorus.ondigitalocean.app/ws');
   
       this.ws.onopen = () => {
         console.log('WebSocket Connected');

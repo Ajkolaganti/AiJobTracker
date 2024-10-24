@@ -17,6 +17,8 @@ import InterviewCopilot from './components/InterviewCopilot';
 import { Button } from './components/ui/button';
 import { Menu } from 'lucide-react';
 import { createBrowserRouter } from 'react-router-dom';
+import { Toaster } from "./components/ui/toaster";
+
 
 
 const AppContent = () => {
@@ -98,7 +100,8 @@ const AppContent = () => {
         </main>
 
         <ChatBot />
-      </div>
+        </div>
+      <Toaster />
     </div>
   );
 };
